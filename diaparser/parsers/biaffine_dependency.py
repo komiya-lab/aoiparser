@@ -135,10 +135,10 @@ class BiaffineDependencyParser(Parser):
 
         for words, feats, arcs, rels in bar:
             self.optimizer.zero_grad()
-
             mask = words.ne(self.WORD.pad_index)
-            # ignore the first token of each sentence
+            #mask = arcs.ne(self.WORD.pad_index)
             mask[:, 0] = 0
+            # ignore the first token of each sentence
             s_arc, s_rel = self.model(words, feats)
             loss = self.model.loss(s_arc, s_rel, arcs, rels, mask, self.args.partial)
             loss.backward()
@@ -243,7 +243,8 @@ class BiaffineDependencyParser(Parser):
         elif args.feat == 'bert':
             tokenizer = BertField.tokenizer(args.bert)
 
-            args.max_len = min(args.max_len or tokenizer.max_len, tokenizer.max_len)
+            if getattr(tokenizer, "max_len", False):
+                args.max_len = min(args.max_len or tokenizer.max_len, tokenizer.max_len)
             FEAT = BertField('bert', tokenizer, fix_len=args.fix_len)
             WORD.bos = FEAT.bos  # ensure representations have the same length
         else:

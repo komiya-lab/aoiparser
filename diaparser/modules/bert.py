@@ -3,10 +3,11 @@
 import torch
 import torch.nn as nn
 from torch.nn.utils.rnn import pad_sequence
-from transformers import AutoModel, AutoConfig
+from transformers import AutoModel, AutoConfig, T5EncoderModel
 
 from .scalar_mix import ScalarMix
 from .dropout import TokenDropout
+from ..utils.logging import logger
 # from torch.cuda import memory_allocated
 
 class BertEmbedding(nn.Module):
@@ -65,7 +66,11 @@ class BertEmbedding(nn.Module):
 
         config = AutoConfig.from_pretrained(model, output_hidden_states=True,
                                             output_attentions=use_attentions)
-        self.bert = AutoModel.from_pretrained(model, config=config)
+        logger.info(f"Transformer Architecture: {config.architectures[0]}")
+        if "T5EncoderModel" in config.architectures:
+            self.bert = T5EncoderModel.from_pretrained(model, config=config)
+        else:
+            self.bert = AutoModel.from_pretrained(model, config=config)
         self.bert.requires_grad_(requires_grad)
 
         self.model = model
@@ -77,7 +82,7 @@ class BertEmbedding(nn.Module):
         self.mix_dropout = mix_dropout
         self.token_dropout = token_dropout
         self.requires_grad = requires_grad
-        self.max_len = self.bert.config.max_position_embeddings
+        self.max_len = getattr(self.bert.config, "max_position_embeddings", 512)
         self.use_hidden_states = use_hidden_states
         self.mask_token_id = mask_token_id
         self.use_attentions = use_attentions

@@ -232,6 +232,8 @@ class BiaffineDependencyModel(nn.Module):
         """
 
         # words, feats are the first two items in the batch from DataLoader.__iter__()
+        #print("words size:", words.size())
+        #print("feats size:", feats.size())
         whole_words = feats[:, :, 0]  # drop subpiece dimension
         batch_size, seq_len = whole_words.shape
         # get the mask and lengths of given batch
@@ -240,6 +242,7 @@ class BiaffineDependencyModel(nn.Module):
         # feat_embed: [batch_size, seq_len, n_feat_embed]
         # attn: [batch_size, seq_len, seq_len]
         feat_embed, attn = self.feat_embed(feats)
+        #print("feats emb size", feat_embed.size())
         if self.word_embed:
             ext_words = words
             # set the indices larger than num_embeddings to unk_index
@@ -283,6 +286,8 @@ class BiaffineDependencyModel(nn.Module):
         s_arc.masked_fill_(~mask.unsqueeze(1), float('-inf'))
         # Lower the diagonal, because the head of a word can't be itself.
         s_arc += torch.diag(s_arc.new(seq_len).fill_(float('-inf')))
+        print("s_arc size:", s_arc.size())
+        print("s_rel size:", s_rel.size())
 
         return s_arc, s_rel
 

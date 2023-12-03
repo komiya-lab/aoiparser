@@ -3,6 +3,7 @@
 from collections import Counter
 from ..utils.fn import pad
 from ..utils.vocab import Vocab, FieldVocab
+from ..utils.logging import logger
 
 import torch
 from typing import List
@@ -305,8 +306,14 @@ class SubwordField(Field):
                                for seq in sequences
                                for token in seq)
         if self.use_vocab:
-            sequences = [[[self.vocab[i] for i in token] for token in seq]
-                         for seq in sequences]
+            seq2 = list()
+            for seq in sequences:
+                try:
+                    seq2.append([[self.vocab[i] if i in self.vocab else self.unk_index for i in token] for token in seq])
+                except Exception as e:
+                    logger.error(f"error of sequence conversion {str(seq)}")
+                    raise e
+            sequences = seq2
         if self.bos:
             sequences = [[[self.bos_index]] + seq for seq in sequences]
         if self.eos:
@@ -377,6 +384,8 @@ class BertField(SubwordField):
         from transformers import AutoTokenizer
         tokenizer = AutoTokenizer.from_pretrained(name)
         tokenizer.bos_token = tokenizer.bos_token or tokenizer.cls_token
+        if tokenizer.bos_token is None:
+            tokenizer.bos_token = "_"
         tokenizer.eos_token = tokenizer.eos_token or tokenizer.sep_token
         return tokenizer
 

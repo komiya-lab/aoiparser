@@ -82,7 +82,7 @@ class BertEmbedding(nn.Module):
         self.mix_dropout = mix_dropout
         self.token_dropout = token_dropout
         self.requires_grad = requires_grad
-        self.max_len = getattr(self.bert.config, "max_position_embeddings", 512)
+        self.max_len = getattr(self.bert.config, "max_position_embeddings", 5096)
         self.use_hidden_states = use_hidden_states
         self.mask_token_id = mask_token_id
         self.use_attentions = use_attentions

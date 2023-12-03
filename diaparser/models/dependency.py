@@ -286,8 +286,8 @@ class BiaffineDependencyModel(nn.Module):
         s_arc.masked_fill_(~mask.unsqueeze(1), float('-inf'))
         # Lower the diagonal, because the head of a word can't be itself.
         s_arc += torch.diag(s_arc.new(seq_len).fill_(float('-inf')))
-        print("s_arc size:", s_arc.size())
-        print("s_rel size:", s_rel.size())
+        #print("s_arc size:", s_arc.size())
+        #print("s_rel size:", s_rel.size())
 
         return s_arc, s_rel
 

@@ -123,6 +123,8 @@ class BiaffineDependencyModel(nn.Module):
 
         # cant use Config(**locals()) because it includes self
         self.args = Config().update(locals())
+        self.pad_index = pad_index
+        self.feat_pad_index = feat_pad_index
         args = self.args
         if args.n_word_embed:
             # the embedding layer
@@ -234,14 +236,22 @@ class BiaffineDependencyModel(nn.Module):
         # words, feats are the first two items in the batch from DataLoader.__iter__()
         #print("words size:", words.size())
         #print("feats size:", feats.size())
-        whole_words = feats[:, :, 0]  # drop subpiece dimension
+        if self.args.feat == 'tag':
+            whole_words = feats
+        else:
+            whole_words = feats[:, :, 0]  # drop subpiece dimension
         batch_size, seq_len = whole_words.shape
         # get the mask and lengths of given batch
-        mask = whole_words.ne(self.feat_embed.pad_index)
+        try:
+            mask = whole_words.ne(self.feat_embed.pad_index)
+            feat_embed, attn = self.feat_embed(feats)
+        except:
+            mask = whole_words.ne(self.feat_pad_index)
+            feat_embed = self.feat_embed(feats)
+            attn = None
         lens = mask.sum(dim=1).cpu() # BUG fix: https://github.com/pytorch/pytorch/issues/43227
         # feat_embed: [batch_size, seq_len, n_feat_embed]
         # attn: [batch_size, seq_len, seq_len]
-        feat_embed, attn = self.feat_embed(feats)
         #print("feats emb size", feat_embed.size())
         if self.word_embed:
             ext_words = words
@@ -258,7 +268,11 @@ class BiaffineDependencyModel(nn.Module):
             # concatenate the word and feat representations
             embed = torch.cat((word_embed, feat_embed), dim=-1)
         else:
-            embed = self.embed_dropout(feat_embed)[0]
+            if self.args.feat == 'tag':
+                embed = self.embed_dropout(feat_embed)
+                embed = embed[0]
+            else:
+                embed = self.embed_dropout(feat_embed)[0]
 
         if self.lstm:
             x = pack_padded_sequence(embed, lens, True, False)

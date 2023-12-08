@@ -385,7 +385,7 @@ class BertField(SubwordField):
         tokenizer = AutoTokenizer.from_pretrained(name)
         tokenizer.bos_token = tokenizer.bos_token or tokenizer.cls_token
         if tokenizer.bos_token is None:
-            tokenizer.bos_token = "_"
+            tokenizer.bos_token = "<bos>"
         tokenizer.eos_token = tokenizer.eos_token or tokenizer.sep_token
         return tokenizer
 

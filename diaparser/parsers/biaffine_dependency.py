@@ -10,12 +10,12 @@ from ..utils import Config, Dataset, Embedding
 from ..utils.common import bos, pad, unk
 from ..utils.field import Field, SubwordField, BertField
 from ..utils.fn import ispunct
-from ..utils.logging import get_logger, progress_bar
+from ..utils.logging import get_logger, progress_bar, logger
 from ..utils.metric import AttachmentMetric
 from ..utils.transform import CoNLL
 from tokenizer.tokenizer import Tokenizer
 
-logger = get_logger(__name__)
+#logger = get_logger(__name__)
 
 
 class BiaffineDependencyParser(Parser):
@@ -248,7 +248,7 @@ class BiaffineDependencyParser(Parser):
             FEAT = BertField('bert', tokenizer, fix_len=args.fix_len)
             WORD.bos = FEAT.bos  # ensure representations have the same length
         else:
-            FEAT = Field('tags', bos=bos)
+            FEAT = Field('tags', bos=bos, pad=pad)
         ARC = Field('arcs', bos=bos, use_vocab=False, fn=CoNLL.get_arcs)
         REL = Field('rels', bos=bos)
         if args.feat in ('char', 'bert'):
